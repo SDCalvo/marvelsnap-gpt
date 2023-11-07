@@ -1,9 +1,8 @@
-import { FileCreateParams } from "openai/resources/files.mjs";
 import OpenAIAssistantClient from "../lib/openAiClient";
-import path from "path";
 import axios from "axios";
 import * as fs from "fs";
 import FormData from "form-data";
+import FunctionHandlers, { FunctionHandler } from "./FuntionHandlers";
 
 class AssistantService {
   private openAi;
@@ -137,7 +136,49 @@ class AssistantService {
     }
   }
 
-  // Add more methods to handle messages, runs, and run steps...
+  async executeFunction(
+    runId: string,
+    threadId: string,
+    toolCallId: string,
+    functionName: string,
+    args: any
+  ) {
+    try {
+      // Map the function name to a handler
+      const functionResult = await this.handleFunctionCall(functionName, args);
+
+      // Submit the function result back to the Assistant API
+      const toolOutputs = [
+        {
+          tool_call_id: toolCallId,
+          output: functionResult,
+        },
+      ];
+
+      const result = await this.openAi.beta.threads.runs.submitToolOutputs(
+        threadId,
+        runId,
+        { tool_outputs: toolOutputs }
+      );
+      return result;
+    } catch (error) {
+      console.error(`Error executing function ${functionName}:`, error);
+      throw error;
+    }
+  }
+
+  // A method that handles the actual function call
+  private async handleFunctionCall(
+    functionName: string,
+    args: any
+  ): Promise<any> {
+    const handler: FunctionHandler | undefined = FunctionHandlers[functionName];
+    if (handler) {
+      return handler(args);
+    } else {
+      throw new Error(`No handler defined for function: ${functionName}`);
+    }
+  }
 }
 
 export default AssistantService;
