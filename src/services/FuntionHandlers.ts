@@ -1,63 +1,22 @@
-import axios from "axios";
-
 export type FunctionHandler = (args: any) => Promise<any>;
 
-// Define a type for the object that holds the function handlers
-type FunctionHandlersType = {
-  [key: string]: FunctionHandler;
-};
+const mtg = require("mtgsdk");
 
-// You can define interfaces for better type checking and autocompletion
-interface MarvelSnapCard {
-  _id: string;
-  name: string;
-  type: string;
-  cost: number;
-  power: number;
-  ability: string;
-  added: string;
-  status: string | null;
-  image: string;
-  variants: string[];
-  source: string;
-  created: string;
-}
-
-interface MarvelSnapApiResponse {
-  limit: number;
-  skip: number;
-  total: number;
-  data: MarvelSnapCard[];
-}
-
-// Function handler for fetching Marvel Snap cards
-async function fetchMarvelSnapCards(filters: {
-  limit?: number;
-  skip?: number;
-}): Promise<MarvelSnapApiResponse> {
-  const options = {
-    method: "GET",
-    url: `https://${process.env.RAPID_MSNAP_ENDPOINT}`,
-    params: filters,
-    headers: {
-      "X-RapidAPI-Key": process.env.RAPID_API_KEY,
-      "X-RapidAPI-Host": process.env.RAPID_MSNAP_ENDPOINT,
-    },
-  };
-
+// Function handler for fetching MTG cards using the mtgsdk
+async function fetchMTGCards(filters: any) {
   try {
-    const response = await axios.request<MarvelSnapApiResponse>(options);
-    return response.data;
+    // Use the SDK's where method to fetch cards
+    const cards = await mtg.card.where(filters);
+    return { cards }; // Return the cards in an object to match the expected response format
   } catch (error) {
-    console.error("Error fetching Marvel Snap cards:", error);
-    throw error; // You can handle the error as per your application's error handling policy
+    console.error("Error fetching MTG cards:", error);
+    throw error;
   }
 }
 
 // Export an object containing all the handlers
-const FunctionHandlers: FunctionHandlersType = {
-  fetchMarvelSnapCards,
-  // ... other handlers ...
+const FunctionHandlers: Record<string, FunctionHandler> = {
+  fetchMTGCards,
 };
 
 export default FunctionHandlers;

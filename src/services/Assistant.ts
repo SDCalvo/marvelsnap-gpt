@@ -15,7 +15,7 @@ class AssistantService {
   async createAssistant(
     name: string,
     description: string,
-    model: string,
+    model: string = "gpt-4-1106-preview",
     additionalTools: any[] = []
   ) {
     // Define the default tools
