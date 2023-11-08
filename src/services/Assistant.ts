@@ -147,6 +147,40 @@ class AssistantService {
     }
   }
 
+  // Method to add a message to a thread
+  async addMessageToThread(
+    threadId: string,
+    message: { role: "user"; content: string; file_ids?: string[] }
+  ) {
+    try {
+      const response = await this.openAi.beta.threads.messages.create(
+        threadId,
+        {
+          ...message,
+        }
+      );
+      return response;
+    } catch (error) {
+      console.error("Error adding message to thread:", error);
+      throw error;
+    }
+  }
+
+  // Method to get messages from a run
+  async getMessagesFromThread(threadId: string) {
+    try {
+      // Retrieve all messages from the thread
+      const response = await this.openAi.beta.threads.messages.list(threadId);
+      // Assuming the API returns a structured response with a data property that holds the messages
+      const allMessages = response.data;
+
+      return allMessages;
+    } catch (error) {
+      console.error("Error retrieving messages from thread:", error);
+      throw error;
+    }
+  }
+
   async getRun(threadId: string, runId: string) {
     try {
       const run = await this.openAi.beta.threads.runs.retrieve(threadId, runId);
