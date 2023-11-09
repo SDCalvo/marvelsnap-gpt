@@ -170,6 +170,20 @@ class AssistantService {
     }
   }
 
+  async listRunSteps(threadId: string, runId: string) {
+    try {
+      // Call the OpenAI API to retrieve run steps
+      const response = await this.openAi.beta.threads.runs.steps.list(
+        threadId,
+        runId
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error in listRunSteps:", error);
+      throw error;
+    }
+  }
+
   // Method to add a message to a thread
   async addMessageToThread(
     threadId: string,
