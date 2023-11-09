@@ -14,17 +14,45 @@ export default async function addMessageToThread(
       res.status(400).json({ error: "Missing content or threadId" });
       return;
     }
-    // Instantiate your service
+
     const service = new AssistantService();
 
     try {
-      const response = await service.addMessageToThread(threadId as string, {
-        role: "user", // role must be 'user' for messages sent by the user
-        content: content,
-      });
-      res.status(200).json(response);
+      // Add the message to the thread
+      const messageResponse = await service.addMessageToThread(
+        threadId as string,
+        {
+          role: "user", // role must be 'user' for messages sent by the user
+          content: content,
+        }
+      );
+
+      // Retrieve the configuration to get the assistant ID
+      const config = await service.getConfig();
+      const assistantId = config.ASSISTANT_ID;
+
+      if (!assistantId) {
+        throw new Error("Assistant ID is not configured.");
+      }
+
+      // Start a run with the assistant
+      const run = await service.createRun(threadId as string, assistantId);
+
+      // Handle the run lifecycle
+      const runResult = await service.orchestrateRun(
+        threadId as string,
+        run.id
+      );
+
+      // Retrieve the updated messages from the thread after the run completes
+      const updatedMessages = await service.getMessagesFromThread(
+        threadId as string
+      );
+
+      // Respond with the updated messages
+      res.status(200).json(updatedMessages);
     } catch (error: any) {
-      console.error("Failed to add message to thread:", error);
+      console.error("Failed to process message and run:", error);
       res.status(500).json({ error: error?.message });
     }
   } else {
