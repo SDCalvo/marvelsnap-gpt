@@ -5,11 +5,22 @@ import FormData from "form-data";
 import FunctionHandlers, { FunctionHandler } from "./FuntionHandlers";
 import { RunSubmitToolOutputsParams } from "openai/resources/beta/threads/runs/runs.mjs";
 
+export interface IAction {
+  runId: string;
+  toolCall: string;
+}
+
+export interface IActionStore {
+  [key: string]: IAction;
+}
+
 class AssistantService {
-  private openAi;
+  public openAi;
+  public actionsStore: IActionStore;
 
   constructor() {
     this.openAi = OpenAIAssistantClient.getClient();
+    this.actionsStore = {};
   }
 
   async getConfig() {
@@ -35,6 +46,18 @@ class AssistantService {
       console.error("Error writing to configuration file:", error);
       throw error;
     }
+  }
+
+  setFrontendAction(threadId: string, action: any) {
+    this.actionsStore[threadId] = action;
+  }
+
+  getFrontendAction(threadId: string) {
+    return this.actionsStore[threadId] || null;
+  }
+
+  clearFrontendAction(threadId: string) {
+    delete this.actionsStore[threadId];
   }
 
   // Method to create an assistant
@@ -219,7 +242,7 @@ class AssistantService {
 
     // Poll the run status at a set interval until a terminal state is reached
     while (run.status === "queued" || run.status === "in_progress") {
-      await new Promise((resolve) => setTimeout(resolve, 5000)); // wait for 5 seconds before polling again
+      await new Promise((resolve) => setTimeout(resolve, 5000)); // Wait for 5 seconds before polling again
       run = await this.getRun(threadId, runId);
     }
 
@@ -228,35 +251,39 @@ class AssistantService {
       run.status === "requires_action" &&
       run.required_action?.type === "submit_tool_outputs"
     ) {
-      // Perform the required actions (function calls)
-      const toolOutputs = await Promise.all(
-        run.required_action.submit_tool_outputs.tool_calls.map(
-          async (toolCall) => {
-            const toolOutput = await this.executeFunction(
-              runId,
-              threadId,
-              toolCall.id, // Make sure you have the correct property name for the tool call ID
-              toolCall.function.name,
-              JSON.parse(toolCall.function.arguments)
-            );
+      for (const toolCall of run.required_action.submit_tool_outputs
+        .tool_calls) {
+        if (this.isFrontendFunction(toolCall.function.name)) {
+          // Notify frontend to execute the function
+          await this.notifyFrontend(threadId, runId, toolCall);
+          // Wait for the frontend to submit the output
+          // This might involve polling a database or listening to a webhook
+        } else {
+          // Execute backend function
+          const toolOutput = await this.executeFunction(
+            runId,
+            threadId,
+            toolCall.id,
+            toolCall.function.name,
+            JSON.parse(toolCall.function.arguments)
+          );
 
-            // Return the tool output in the format expected by the API
-            return {
-              tool_call_id: toolCall.id,
-              output: toolOutput.output,
-            };
-          }
-        )
-      );
+          // Submit the tool output
+          await this.openAi.beta.threads.runs.submitToolOutputs(
+            threadId,
+            runId,
+            {
+              tool_outputs: [
+                { tool_call_id: toolCall.id, output: toolOutput.output },
+              ],
+            }
+          );
+        }
+      }
 
-      // Submit the tool output to continue the run
-      await this.openAi.beta.threads.runs.submitToolOutputs(threadId, runId, {
-        tool_outputs: toolOutputs,
-      });
-
-      // Poll the run status again until a terminal state is reached
+      // Continue polling the run status until a terminal state is reached
       do {
-        await new Promise((resolve) => setTimeout(resolve, 5000)); // wait for 5 seconds before polling again
+        await new Promise((resolve) => setTimeout(resolve, 5000)); // Wait for 5 seconds before polling again
         run = await this.getRun(threadId, runId);
       } while (run.status === "queued" || run.status === "in_progress");
     }
@@ -278,6 +305,25 @@ class AssistantService {
       console.error("Unknown run status:", run.status);
       throw new Error(`Unknown run status: ${run.status}`);
     }
+  }
+
+  // Helper method to determine if a function call is for the frontend
+  isFrontendFunction(functionName: string) {
+    // Implement your logic to determine if it's a frontend function
+    return functionName.startsWith("frontend_");
+  }
+
+  // Method to notify the frontend
+  async notifyFrontend(threadId: string, runId: string, toolCall: any) {
+    // Prepare the action detail
+    const actionDetail = {
+      runId,
+      toolCall,
+      // Add any other details you need
+    };
+
+    // Store the action
+    this.setFrontendAction(threadId, actionDetail);
   }
 
   async executeFunction(

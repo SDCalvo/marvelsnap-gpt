@@ -1,3 +1,5 @@
+//api/createThread.ts
+
 import OpenAIAssistantClient from "@/lib/openAiClient";
 import AssistantService from "@/services/Assistant";
 import { NextApiRequest, NextApiResponse } from "next";
