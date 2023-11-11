@@ -44,12 +44,13 @@ export interface MTGCard {
   originalType: string;
   legalities: { format: string; legality: string }[];
   id: string;
-  // ... (include any other properties provided by the MTG API)
 }
 
-class MTGAPITool {
-  type: "function" = "function";
-  function: AssistantCreateParams.AssistantToolsFunction.Function = {
+//AssistantCreateParams.AssistantToolsFunction.Function
+
+const MTGAPITool = {
+  type: "function",
+  function: {
     description:
       "Fetches a list of Magic: The Gathering cards with specified filters",
     name: "fetchMTGCards",
@@ -192,7 +193,7 @@ class MTGAPITool {
       },
       required: [],
     },
-  };
-}
+  },
+};
 
 export default MTGAPITool;

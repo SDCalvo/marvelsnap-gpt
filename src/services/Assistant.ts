@@ -4,6 +4,8 @@ import * as fs from "fs";
 import FormData from "form-data";
 import FunctionHandlers, { FunctionHandler } from "./FuntionHandlers";
 import { RunSubmitToolOutputsParams } from "openai/resources/beta/threads/runs/runs.mjs";
+import path from "path";
+import MTGAPITool from "./MTGApiTool";
 
 export interface IAction {
   runId: string;
@@ -25,7 +27,8 @@ class AssistantService {
 
   async getConfig() {
     try {
-      const data = await fs.promises.readFile("../config.json", "utf8");
+      const configPath = path.join(process.cwd(), "config.json");
+      const data = await fs.promises.readFile(configPath, "utf8");
       return JSON.parse(data);
     } catch (error) {
       console.error("Error reading configuration file:", error);
@@ -33,12 +36,27 @@ class AssistantService {
     }
   }
 
-  async updateConfig(assistantId: string) {
+  async updateConfig(
+    assistantId?: string,
+    filePartId?: string,
+    fileId?: string
+  ) {
     try {
       const config = await this.getConfig();
-      config.ASSISTANT_ID = assistantId;
+      const configPath = path.join(process.cwd(), "config.json");
+
+      // Update assistant ID if provided
+      if (assistantId !== undefined) {
+        config.ASSISTANT_ID = assistantId;
+      }
+
+      // Update file ID for the specific part if provided
+      if (filePartId !== undefined && fileId !== undefined) {
+        config.UPLOADED_FILE_IDS[filePartId] = fileId;
+      }
+
       await fs.promises.writeFile(
-        "../config.json",
+        configPath,
         JSON.stringify(config, null, 2),
         "utf8"
       );
@@ -67,7 +85,7 @@ class AssistantService {
     model: string = "gpt-4-1106-preview",
     additionalTools: any[] = []
   ) {
-    // Check if the assistant already exists, if so, query for the assistant and return it
+    // Check if the assistant already exists
     const config = await this.getConfig();
     if (config.ASSISTANT_ID) {
       try {
@@ -83,35 +101,42 @@ class AssistantService {
 
     // Define the default tools
     const defaultTools = [{ type: "code_interpreter" }, { type: "retrieval" }];
-
-    // Combine the default tools with any additional tools passed as parameters
-    const combinedTools = [...defaultTools, ...additionalTools];
-
-    // The path to the CSV file in the public folder (adjust the filename as needed)
-    const csvFilePath = "public/your-csv-filename.csv"; // This path should be relative to the public directory
+    const MTGTool = MTGAPITool;
+    const combinedTools = [...defaultTools, MTGTool, ...additionalTools];
 
     try {
-      // Make a request to the upload API endpoint
-      const formData = new FormData();
-      formData.append("file", fs.createReadStream(csvFilePath)); // This is a Node.js example. Adjust if needed for your frontend logic.
+      // Array to store the file IDs
+      const fileIds = [];
 
-      const uploadResponse = await this.openAi.files.create({
-        file: fs.createReadStream(csvFilePath),
-        purpose: "assistants",
-      });
+      // Loop to upload each file
+      for (let i = 1; i <= 15; i++) {
+        const jsonFilePath = `public/split_data_part_${i}.json`;
+        const config = await this.getConfig();
+        let fileId = config.UPLOADED_FILE_IDS[`part_${i}`];
 
-      // Extract the file ID from the response
-      const fileId = uploadResponse.id;
+        if (!fileId) {
+          // File does not exist, upload it
+          const uploadResponse = await this.openAi.files.create({
+            file: fs.createReadStream(jsonFilePath),
+            purpose: "assistants",
+          });
+          fileId = uploadResponse.id;
+          await this.updateConfig(undefined, `part_${i}`, fileId);
+        }
 
-      // Create the assistant with the file ID included
+        fileIds.push(fileId);
+        console.log(`Processed file part ${i} with ID ${fileId}`);
+      }
+
+      // Create the assistant with the file IDs included
       const assistant = await this.openAi.beta.assistants.create({
         name: name,
         description: description,
         model: model,
         tools: combinedTools,
-        file_ids: [fileId], // Use the uploaded file ID
+        file_ids: fileIds, // Use the uploaded file IDs
       });
-
+      console.log("Created assistant:", assistant);
       return assistant;
     } catch (error) {
       console.error("Error creating assistant or uploading file:", error);
