@@ -8,7 +8,7 @@ const AddMessageComponent = ({ threadId }: any) => {
 
   const addMessage = async () => {
     setLoading(true);
-    const response = await fetch(`/api/threads/${threadId}/add-message`, {
+    const response = await fetch(`/api/threads/${threadId}/addMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content: message }),

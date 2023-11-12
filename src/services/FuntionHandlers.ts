@@ -2,19 +2,26 @@ export type FunctionHandler = (args: any) => Promise<any>;
 
 const mtg = require("mtgsdk");
 
-// Function handler for fetching MTG cards using the mtgsdk
+// Function handler for fetching MTG cards
 async function fetchMTGCards(filters: any) {
   try {
-    // Use the SDK's where method to fetch cards
+    delete filters.page;
+    delete filters.pageSize;
+    console.log("Assistant Function: Fetching cards with filters:", filters);
+    console.log(`Type of filters: ${typeof filters}`);
     const cards = await mtg.card.where(filters);
-    return { cards }; // Return the cards in an object to match the expected response format
-  } catch (error) {
-    console.error("Error fetching MTG cards:", error);
-    throw error;
+    console.log("Assistant Function: Number of cards fetched:", cards.length);
+    return cards;
+  } catch (error: any) {
+    console.error("Assistant Function: Error fetching MTG cards:", error.error);
+    return {
+      cards: `Error fetching cards: using ${JSON.stringify(
+        filters
+      )}, filters provided are not valid.`,
+    };
   }
 }
 
-// Export an object containing all the handlers
 const FunctionHandlers: Record<string, FunctionHandler> = {
   fetchMTGCards,
 };

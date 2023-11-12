@@ -136,6 +136,7 @@ class AssistantService {
         tools: combinedTools,
         file_ids: fileIds, // Use the uploaded file IDs
       });
+      this.updateConfig(assistant.id);
       console.log("Created assistant:", assistant);
       return assistant;
     } catch (error) {
@@ -278,56 +279,58 @@ class AssistantService {
   // Orchestrator method that handles the run lifecycle
   async orchestrateRun(threadId: string, runId: string) {
     let run = await this.getRun(threadId, runId);
+    console.log(`Initial run status: ${run.status}`);
 
-    // Poll the run status at a set interval until a terminal state is reached
-    while (run.status === "queued" || run.status === "in_progress") {
-      await new Promise((resolve) => setTimeout(resolve, 5000)); // Wait for 5 seconds before polling again
+    while (
+      ![
+        "requires_action",
+        "completed",
+        "failed",
+        "expired",
+        "cancelled",
+      ].includes(run.status)
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 5000));
       run = await this.getRun(threadId, runId);
+      console.log(`Run status updated to: ${run.status}`);
     }
 
-    // Handle required action if the run status is 'requires_action'
     if (
       run.status === "requires_action" &&
       run.required_action?.type === "submit_tool_outputs"
     ) {
+      const toolOutputs = [];
+
       for (const toolCall of run.required_action.submit_tool_outputs
         .tool_calls) {
-        if (this.isFrontendFunction(toolCall.function.name)) {
-          // Notify frontend to execute the function
-          await this.notifyFrontend(threadId, runId, toolCall);
-          // Wait for the frontend to submit the output
-          // This might involve polling a database or listening to a webhook
-        } else {
-          // Execute backend function
-          const toolOutput = await this.executeFunction(
-            runId,
-            threadId,
-            toolCall.id,
-            toolCall.function.name,
-            JSON.parse(toolCall.function.arguments)
-          );
-
-          // Submit the tool output
-          await this.openAi.beta.threads.runs.submitToolOutputs(
-            threadId,
-            runId,
-            {
-              tool_outputs: [
-                { tool_call_id: toolCall.id, output: toolOutput.output },
-              ],
-            }
-          );
-        }
+        const output = await this.executeFunction(
+          toolCall.id,
+          toolCall.function.name,
+          JSON.parse(toolCall.function.arguments)
+        );
+        console.log("Function output:", output);
+        toolOutputs.push({
+          tool_call_id: output.tool_call_id,
+          output: output.output,
+        });
       }
 
-      // Continue polling the run status until a terminal state is reached
+      console.log("Submitting tool outputs...");
+      const outputSubmitedResp =
+        await this.openAi.beta.threads.runs.submitToolOutputs(threadId, runId, {
+          tool_outputs: toolOutputs,
+        });
+      console.log("Tool outputs submitted:", outputSubmitedResp);
       do {
-        await new Promise((resolve) => setTimeout(resolve, 5000)); // Wait for 5 seconds before polling again
+        await new Promise((resolve) => setTimeout(resolve, 5000));
         run = await this.getRun(threadId, runId);
-      } while (run.status === "queued" || run.status === "in_progress");
+      } while (
+        !["completed", "failed", "expired", "cancelled"].includes(run.status)
+      );
     }
 
-    // Check for terminal states and handle accordingly
+    console.log(`Run final status: ${run.status}`);
+    //Process terminal states
     if (run.status === "completed") {
       console.log("Run completed successfully.");
       return run;
@@ -366,32 +369,23 @@ class AssistantService {
   }
 
   async executeFunction(
-    runId: string,
-    threadId: string,
     toolCallId: string,
     functionName: string,
     args: any
   ): Promise<RunSubmitToolOutputsParams.ToolOutput> {
     try {
-      // Map the function name to a handler
-      const functionResult = await this.handleFunctionCall(functionName, args);
+      console.log(`Executing function: ${functionName} with args:`, args);
 
-      // Convert the function result to a string if necessary
-      // The API expects the output to be a string, so you should stringify the result
+      const functionResult = await this.handleFunctionCall(functionName, args);
       const output = JSON.stringify(functionResult);
 
-      // Prepare the tool output for submission
+      console.log(`Function ${functionName} output:`, output);
+
       const toolOutput: RunSubmitToolOutputsParams.ToolOutput = {
         tool_call_id: toolCallId,
-        output: output, // This is now a string
+        output: output,
       };
 
-      // Submit the tool output to the Assistant API
-      await this.openAi.beta.threads.runs.submitToolOutputs(threadId, runId, {
-        tool_outputs: [toolOutput],
-      });
-
-      // Return the tool output in the correct format
       return toolOutput;
     } catch (error) {
       console.error(`Error executing function ${functionName}:`, error);

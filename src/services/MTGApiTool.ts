@@ -52,16 +52,12 @@ const MTGAPITool = {
   type: "function",
   function: {
     description:
-      "Fetches a list of Magic: The Gathering cards with specified filters",
+      "Fetches a list of Magic: The Gathering cards with specified filters, keep in mind you can't use page or pageSize filters, only use the filters specified in this tool.",
     name: "fetchMTGCards",
     parameters: {
       type: "object",
       properties: {
-        name: {
-          type: "string",
-          description: "The card name",
-          optional: true,
-        },
+        name: { type: "string", description: "The card name", optional: true },
         manaCost: {
           type: "string",
           description: "The mana cost of the card",
@@ -76,38 +72,28 @@ const MTGAPITool = {
           type: "array",
           description: "The card colors",
           optional: true,
-          items: {
-            type: "string",
-          },
+          items: { type: "string" },
+          acceptedValues: [
+            "Red",
+            "Blue",
+            "Black",
+            "Green",
+            "White",
+            "Colorless",
+          ],
         },
-        colorIdentity: {
-          type: "array",
-          description: "The color identity of the card",
-          optional: true,
-          items: {
-            type: "string",
-          },
-        },
-        type: {
-          type: "string",
-          description: "The card type",
-          optional: true,
-        },
+        type: { type: "string", description: "The card type", optional: true },
         types: {
           type: "array",
           description: "The card types",
           optional: true,
-          items: {
-            type: "string",
-          },
+          items: { type: "string" },
         },
         subtypes: {
           type: "array",
           description: "The card subtypes",
           optional: true,
-          items: {
-            type: "string",
-          },
+          items: { type: "string" },
         },
         rarity: {
           type: "string",
@@ -117,11 +103,6 @@ const MTGAPITool = {
         set: {
           type: "string",
           description: "The set the card belongs to (set code)",
-          optional: true,
-        },
-        setName: {
-          type: "string",
-          description: "The full name of the set the card belongs to",
           optional: true,
         },
         text: {
@@ -167,27 +148,6 @@ const MTGAPITool = {
         imageUrl: {
           type: "string",
           description: "The image URL of the card",
-          optional: true,
-        },
-        language: {
-          type: "string",
-          description: "The language of the card",
-          optional: true,
-        },
-        page: {
-          type: "number",
-          description: "The page of data to request",
-          optional: true,
-        },
-        pageSize: {
-          type: "number",
-          description: "The amount of data to return in a single request",
-          optional: true,
-        },
-        legality: {
-          type: "string",
-          description:
-            "The legality of the card for a given format (e.g., 'Legal', 'Banned', 'Restricted')",
           optional: true,
         },
       },

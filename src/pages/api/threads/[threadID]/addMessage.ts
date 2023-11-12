@@ -8,9 +8,9 @@ export default async function addMessageToThread(
   res: NextApiResponse
 ) {
   if (req.method === "POST") {
-    const { threadId } = req.query;
+    const { threadID } = req.query;
     const { content } = req.body;
-    if (!content || !threadId) {
+    if (!content || !threadID) {
       res.status(400).json({ error: "Missing content or threadId" });
       return;
     }
@@ -20,7 +20,7 @@ export default async function addMessageToThread(
     try {
       // Add the message to the thread
       const messageResponse = await service.addMessageToThread(
-        threadId as string,
+        threadID as string,
         {
           role: "user", // role must be 'user' for messages sent by the user
           content: content,
@@ -36,21 +36,26 @@ export default async function addMessageToThread(
       }
 
       // Start a run with the assistant
-      const run = await service.createRun(threadId as string, assistantId);
+      const run = await service.createRun(threadID as string, assistantId);
 
       // Handle the run lifecycle
       const runResult = await service.orchestrateRun(
-        threadId as string,
+        threadID as string,
         run.id
       );
 
       // Retrieve the updated messages from the thread after the run completes
       const updatedMessages = await service.getMessagesFromThread(
-        threadId as string
+        threadID as string
       );
 
+      const finalResult = {
+        messages: updatedMessages,
+        run: runResult,
+      };
+
       // Respond with the updated messages
-      res.status(200).json(updatedMessages);
+      res.status(200).json(finalResult);
     } catch (error: any) {
       console.error("Failed to process message and run:", error);
       res.status(500).json({ error: error?.message });
