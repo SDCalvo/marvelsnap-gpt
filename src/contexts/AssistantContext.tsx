@@ -1,3 +1,6 @@
+import { Assistant } from "openai/resources/beta/assistants/assistants.mjs";
+import { Run } from "openai/resources/beta/threads/runs/runs.mjs";
+import { Thread } from "openai/resources/beta/threads/threads.mjs";
 import React, { createContext, useReducer, useContext } from "react";
 
 // Define a type for message content
@@ -27,6 +30,24 @@ type IState = {
   messages: IMessage[];
   isLoading: boolean;
   error: string | null;
+  assistantId: string | null;
+  assistant: Assistant | null;
+  threadId: string | null;
+  thread: Thread | null;
+  runId: string | null;
+  run: Run | null;
+};
+
+const initialState: IState = {
+  messages: [],
+  isLoading: false,
+  error: null,
+  assistantId: null,
+  assistant: null,
+  threadId: null,
+  thread: null,
+  runId: null,
+  run: null,
 };
 
 // Define action types
@@ -34,14 +55,20 @@ type Action =
   | { type: "ADD_MESSAGE"; payload: IMessage }
   | { type: "SET_LOADING"; payload: boolean }
   | { type: "SET_ERROR"; payload: string | null }
-  | { type: "CLEAR_MESSAGES" };
+  | { type: "CLEAR_MESSAGES" }
+  | { type: "SET_ASSISTANT_ID"; payload: string }
+  | { type: "SET_ASSISTANT"; payload: Assistant }
+  | { type: "SET_THREAD_ID"; payload: string }
+  | { type: "SET_THREAD"; payload: Thread }
+  | { type: "SET_RUN_ID"; payload: string }
+  | { type: "SET_RUN"; payload: Run };
 
 // Create the context
 const AssistantContext = createContext<{
   state: IState;
   dispatch: React.Dispatch<Action>;
 }>({
-  state: { messages: [], isLoading: false, error: null },
+  state: initialState,
   dispatch: () => null,
 });
 
@@ -56,6 +83,18 @@ const reducer = (state: IState, action: Action): IState => {
       return { ...state, error: action.payload };
     case "CLEAR_MESSAGES":
       return { ...state, messages: [] };
+    case "SET_ASSISTANT_ID":
+      return { ...state, assistantId: action.payload };
+    case "SET_ASSISTANT":
+      return { ...state, assistant: action.payload };
+    case "SET_THREAD_ID":
+      return { ...state, threadId: action.payload };
+    case "SET_THREAD":
+      return { ...state, thread: action.payload };
+    case "SET_RUN_ID":
+      return { ...state, runId: action.payload };
+    case "SET_RUN":
+      return { ...state, run: action.payload };
     default:
       return state;
   }
@@ -67,11 +106,7 @@ type AssistantProviderProps = {
 };
 
 export const AssistantProvider = ({ children }: AssistantProviderProps) => {
-  const [state, dispatch] = useReducer(reducer, {
-    messages: [],
-    isLoading: false,
-    error: null,
-  });
+  const [state, dispatch] = useReducer(reducer, initialState);
 
   return (
     <AssistantContext.Provider value={{ state, dispatch }}>
