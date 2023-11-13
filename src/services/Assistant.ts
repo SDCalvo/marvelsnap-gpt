@@ -145,6 +145,17 @@ class AssistantService {
     }
   }
 
+  // Get assistant
+  async getAssistant(assistantId: string) {
+    try {
+      const assistant = await this.openAi.beta.assistants.retrieve(assistantId);
+      return assistant;
+    } catch (error) {
+      console.error("Error retrieving assistant:", error);
+      throw error;
+    }
+  }
+
   // Method to create a thread
   async createThread(messages: any[], fileIds: string[]) {
     try {
@@ -157,6 +168,17 @@ class AssistantService {
       return thread;
     } catch (error) {
       console.error("Error creating thread:", error);
+      throw error;
+    }
+  }
+
+  // Method to retrieve a thread
+  async getThread(threadId: string) {
+    try {
+      const thread = await this.openAi.beta.threads.retrieve(threadId);
+      return thread;
+    } catch (error) {
+      console.error("Error retrieving thread:", error);
       throw error;
     }
   }
