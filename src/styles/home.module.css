@@ -1,0 +1,33 @@
+.main-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+  
+    .title-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 2rem;
+  
+      .title {
+        font-size: 6rem;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 1rem;
+      }
+  
+      .subtitle {
+        font-size: 2rem;
+        font-weight: 400;
+        color: #b6b6b6;
+      }
+  
+      .image-container {
+        margin-top: 6em;
+        width: 50%;
+      }
+    }
+  }

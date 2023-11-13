@@ -1,47 +1,29 @@
-import AddMessageComponent from "@/components/AddMessage";
-import CreateAssistantComponent from "@/components/CreateAssistant";
-import CreateThreadComponent from "@/components/CreateThread";
-import { useState, useEffect } from "react";
-import axios from "axios"; // Assuming you're using axios for HTTP requests
+import React from "react";
+import Image from "next/image";
+import "@/styles/global.css";
+import baseStyles from "@/styles/home.module.css";
 
-const HomePage = () => {
-  const [assistantId, setAssistantId] = useState<string>("");
-  const [thread, setThread] = useState<any>(null);
-
-  const fetchConfig = async () => {
-    try {
-      const response = await axios.get("/api/config");
-      const config = response.data;
-      if (config.ASSISTANT_ID) {
-        setAssistantId(config.ASSISTANT_ID);
-      }
-    } catch (error) {
-      console.error("Error fetching config:", error);
-    }
-  };
-
-  // useEffect to fetch config on mount
-  useEffect(() => {
-    fetchConfig();
-  }, []);
-
+const Index = () => {
   return (
-    <div>
-      <h1>Assistant Test App</h1>
-      {!assistantId && (
-        <CreateAssistantComponent onAssistantCreated={setAssistantId} />
-      )}
-      {assistantId && (
-        <>
-          <CreateThreadComponent
-            assistantId={assistantId}
-            onThreadCreated={setThread}
+    <div className={baseStyles["main-container"]}>
+      <div className={baseStyles["title-container"]}>
+        <h1 className={baseStyles["title"]}>MTG Assistant</h1>
+        <p className={baseStyles["subtitle"]}>
+          A Magic: The Gathering assistant to create decks, ask questions, and
+          more!
+        </p>
+        <div className={baseStyles["image-container"]}>
+          <Image
+            src="/mtgCardBack.jpg"
+            alt="MTG Card Back"
+            width={200}
+            height={280}
+            layout="responsive"
           />
-          {thread && <AddMessageComponent threadId={thread.id} />}
-        </>
-      )}
+        </div>
+      </div>
     </div>
   );
 };
 
-export default HomePage;
+export default Index;

@@ -1,0 +1,146 @@
+.main-container {
+    color: #fff;
+    padding: 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    background: #121212;
+    font-family: 'Open Sans', sans-serif;
+  }
+  
+  .title {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+    color: #4a90e2;
+    text-transform: uppercase;
+    animation: fadeIn 1s ease-in-out forwards;
+  }
+  
+  .subtitle {
+    font-size: 1rem;
+    margin-bottom: 2rem;
+    color: #a5b1c2;
+    animation: fadeIn 1.5s ease-in-out forwards;
+    max-width: 600px;
+  }
+  
+  .info-section {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 1000px;
+    margin: 2rem auto;
+  }
+  
+  .tech-container, .author-container {
+    flex-basis: 45%;
+    padding: 1rem;
+    animation: slideUpFadeIn 2s ease-in-out forwards;
+  }
+  
+  .tech-container {
+    border-right: 2px solid #333;
+  }
+  
+  .author-container {
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .author-header {
+    display: flex;
+    justify-content: flex-start;
+    align-items: baseline;
+  }
+  
+  .author-title {
+    margin-right: 10px;
+    margin-bottom: 0;
+  }
+  
+  .author-name {
+    font-size: 1.5rem;
+    font-weight: 600;
+    display: inline;
+    margin-bottom: 0;
+  }
+  
+  .tech-title, .author-title {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    color: #4a90e2;
+  }
+
+  .tech-title {
+    text-align: left;
+  }
+  
+  .tech-list, .author-list {
+    list-style-type: none;
+    padding: 0;
+    text-align: left;
+  }
+  
+  .tech-item, .author-list li {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    transition: transform 0.3s;
+  }
+  
+  .link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #4a90e2;
+    text-decoration: none;
+    transition: color 0.3s, transform 0.3s;
+  }
+  
+  .link:hover {
+    color: #357ABD;
+    transform: translateY(-2px);
+  }
+  
+  @keyframes fadeIn {
+    to {
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slideUpFadeIn {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .info-section {
+      flex-direction: column;
+    }
+  
+    .tech-container {
+      border-right: none;
+      margin-bottom: 1rem;
+    }
+  
+    .title, .tech-title, .author-title {
+      font-size: 1.5rem;
+    }
+  
+    .subtitle, .tech-item, .author-list li, .link {
+      font-size: 1rem;
+    }
+  
+    .author-header {
+      flex-direction: column;
+      align-items: center;
+    }
+  }
+  
