@@ -34,8 +34,15 @@ const Chat = () => {
   };
 
   // Note: Depending on your backend, you might need to adjust the index calculation
-  const orderedMessages = state.messages;
   const isNewMessage = (index: number) => index === lastUserMessageIndex;
+
+  //Add event listener to send message when pressing enter
+  const handleKeyDown = (event: any) => {
+    if (isLoading || !newMessage.trim() || state.loadingMessage) return;
+    if (event.key === "Enter") {
+      sendMessage();
+    }
+  };
 
   return (
     <div className={styles.outerContainer}>
@@ -71,6 +78,7 @@ const Chat = () => {
           <input
             type="text"
             value={newMessage}
+            onKeyDown={handleKeyDown}
             onChange={(e) => setNewMessage(e.target.value)}
             className={styles.newMessageInput}
             placeholder="Type your message here..."

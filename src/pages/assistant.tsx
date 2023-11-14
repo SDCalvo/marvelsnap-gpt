@@ -8,6 +8,7 @@ import {
 } from "@/requests/assistantsRequests";
 import Chat from "@/components/Chat";
 import Steps from "@/components/Steps";
+import baseStyles from "@/styles/assistant.module.css";
 
 const Assistant = () => {
   const { state, dispatch } = useAssistant();
@@ -84,10 +85,10 @@ const Assistant = () => {
       {state.isLoading && <p>Loading...</p>}
       {state.error && <p>Error: {state.error}</p>}
       {!state.isLoading && !state.error && (
-        <>
+        <div className={baseStyles["main-container"]}>
           <Chat />
           <Steps />
-        </>
+        </div>
       )}
     </div>
   );
