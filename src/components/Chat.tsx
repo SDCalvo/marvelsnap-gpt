@@ -4,12 +4,21 @@ import { addMessageToThread, cancelRun } from "@/requests/assistantsRequests";
 import styles from "../styles/chat.module.css";
 import AssistantMessage, { IMessagePart } from "./AssistantMessage";
 
+export interface IShowCard {
+  showCard: boolean;
+  cardUrl: string;
+}
+
 const Chat = () => {
   const { state, dispatch } = useAssistant();
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   // Add a new state to track the index of the last user message
   const [lastUserMessageIndex, setLastUserMessageIndex] = useState(-1);
+  const [showCard, setShowCard] = useState<IShowCard>({
+    showCard: false,
+    cardUrl: "",
+  });
 
   const sendMessage = async () => {
     if (state.threadId && newMessage.trim()) {
@@ -49,8 +58,8 @@ const Chat = () => {
     const parts: IMessagePart[] = [];
     if (!markdownText) return parts;
 
-    // Replace single dash with line break
-    const updatedText = markdownText.replace(/(^|\s)-(\s|$)/g, "<br>");
+    // Replace single dash with a special placeholder that won't be affected by other regex
+    const updatedText = markdownText.replace(/(^|\s)-(\s|$)/g, "$1<br/>$2");
 
     // Split the text by markdown link and image syntax
     const splitText = updatedText.split(/(\!\[.*?\]\(.*?\))|(\*\*.*?\*\*)/g);
@@ -72,20 +81,18 @@ const Chat = () => {
         // Bold syntax
         const boldText = text.replace(/^\*\*(.*?)\*\*$/, "$1");
         parts.push({ type: "strong", content: boldText });
-      } else if (text.includes("<br>")) {
-        // New lines
-        text.split("<br>").forEach((part) => {
+      } else {
+        // Check for line breaks (br tags)
+        const textParts = text.split("<br/>");
+        textParts.forEach((part, index) => {
           if (part) {
             parts.push({ type: "text", content: part });
-            // Add a newline part
-            parts.push({ type: "text", content: "<br>" });
+          }
+          // Add line breaks except for the last part
+          if (index < textParts.length - 1) {
+            parts.push({ type: "linebreak", content: "" });
           }
         });
-        // Remove the last added <br> as it's extra
-        parts.pop();
-      } else {
-        // Plain text
-        parts.push({ type: "text", content: text });
       }
     });
 
@@ -135,7 +142,12 @@ const Chat = () => {
                     content?.text?.value
                   );
                   return (
-                    <AssistantMessage key={contentIndex} parts={messageParts} />
+                    <AssistantMessage
+                      key={contentIndex}
+                      parts={messageParts}
+                      showCard={showCard}
+                      setShowCard={setShowCard}
+                    />
                   );
                 })}
               </div>
@@ -162,6 +174,14 @@ const Chat = () => {
           <button onClick={cancelRun} className={styles.sendMessageButton}>
             Cancel
           </button>
+        </div>
+
+        <div
+          className={`${styles["card-tooltip-image"]} ${
+            showCard.showCard ? styles["show"] : ""
+          }`}
+        >
+          <img src={showCard.cardUrl} alt="card" />
         </div>
       </div>
     </div>

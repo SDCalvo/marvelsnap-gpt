@@ -1,29 +1,27 @@
 import { useState } from "react";
-import baseStyles from "../styles/cardImageTooltip.module.css";
+import baseStyles from "../styles/chat.module.css";
+import { IShowCard } from "./Chat";
 
 const CardImageTooltip = ({
   cardName,
-  imageUrl,
+  cardUrl,
+  showCard,
+  setShowCard,
 }: {
   cardName: string;
-  imageUrl: string;
+  cardUrl: string;
+  showCard: IShowCard;
+  setShowCard: React.Dispatch<React.SetStateAction<IShowCard>>;
 }) => {
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
 
   return (
     <span
       className={baseStyles["card-tooltip-container"]}
-      onMouseEnter={() => setIsTooltipVisible(true)}
-      onMouseLeave={() => setIsTooltipVisible(false)}
+      onMouseEnter={() => setShowCard({ showCard: true, cardUrl })}
+      onMouseLeave={() => setShowCard({ showCard: false, cardUrl: "" })}
     >
       <p className={baseStyles["card-tooltip-text"]}>{cardName}</p>
-      {isTooltipVisible && (
-        <div className={baseStyles["card-tooltip-image"]}>
-          <div className={baseStyles["card-tooltip-image"]}>
-            <img src={imageUrl} alt={`Image of ${cardName}`} />
-          </div>
-        </div>
-      )}
     </span>
   );
 };

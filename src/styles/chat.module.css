@@ -15,6 +15,7 @@
     margin: auto;
     overflow: hidden;
     border: 4px solid #a7ada7;
+    position: relative;
   }
   
   .messagesContainer {
@@ -197,4 +198,43 @@
   
   .message-html-content strong {
     font-weight: bold;
+  }
+
+  .card-tooltip-image {
+    width: auto;
+    background-color: black;
+    border-radius: 5px;
+    padding: 5px;
+    position: absolute;
+    z-index: 10;
+    top: 0;
+    left: 0;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+  }
+  
+  .show {
+    opacity: 1;
+    transition: opacity 0.3s;
+  }
+  
+  
+  .card-tooltip-image img {
+    width: 400px;
+    height: auto;
+    z-index: 10;
+    border-radius: 17px;
+  }
+
+  .card-tooltip-container {
+    display: inline-block;
+    cursor: pointer;
+  }
+
+  .card-tooltip-text {
+    color: blue;
+    font-size: 1.2rem;
+    font-weight: 500;
+    line-height: 1.5;
+    margin: 0;
   }

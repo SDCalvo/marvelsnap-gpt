@@ -1,15 +1,22 @@
 import CardImageTooltip from "./CardImageTooltip";
+import { IShowCard } from "./Chat";
 
 export interface IMessagePart {
-  type: "text" | "image" | "strong";
+  type: "text" | "image" | "strong" | "linebreak";
   content: string;
   url?: string;
 }
 interface AssistantMessageProps {
   parts: IMessagePart[];
+  showCard: IShowCard;
+  setShowCard: React.Dispatch<React.SetStateAction<IShowCard>>;
 }
 
-const AssistantMessage: React.FC<AssistantMessageProps> = ({ parts }) => {
+const AssistantMessage: React.FC<AssistantMessageProps> = ({
+  parts,
+  showCard,
+  setShowCard,
+}) => {
   // Logic to render message parts based on their type
   const renderMessagePart = (part: IMessagePart, index: number) => {
     switch (part.type) {
@@ -18,14 +25,19 @@ const AssistantMessage: React.FC<AssistantMessageProps> = ({ parts }) => {
       case "strong":
         return <strong key={index}>{part.content}</strong>;
       case "image":
-        // Here you will show the image in a tooltip or however you prefer
+        // Render the image with a tooltip or modal as before
         return (
           <CardImageTooltip
             key={index}
             cardName={part.content}
-            imageUrl={part.url as string}
+            cardUrl={part.url as string}
+            showCard={showCard}
+            setShowCard={setShowCard}
           />
         );
+      case "linebreak":
+        // Render a line break
+        return <br key={index} />;
       default:
         return null;
     }
