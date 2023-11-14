@@ -1,43 +1,92 @@
-import AddMessageComponent from "@/components/AddMessage";
-import CreateAssistantComponent from "@/components/CreateAssistant";
-import CreateThreadComponent from "@/components/CreateThread";
 import { useState, useEffect } from "react";
-import axios from "axios"; // Assuming you're using axios for HTTP requests
+import axios from "axios";
+import { useAssistant } from "@/contexts/AssistantContext";
+import {
+  createThread,
+  getAssistant,
+  getConfig,
+} from "@/requests/assistantsRequests";
+import Chat from "@/components/Chat";
+import Steps from "@/components/Steps";
 
 const Assistant = () => {
-  const [assistantId, setAssistantId] = useState<string>("");
-  const [thread, setThread] = useState<any>(null);
+  const { state, dispatch } = useAssistant();
 
-  const fetchConfig = async () => {
+  useEffect(() => {
+    fetchConfigAndSetAssistant();
+  }, []);
+
+  useEffect(() => {
+    const createNewThread = async () => {
+      try {
+        dispatch({ type: "SET_LOADING", payload: true });
+        const threadDetails = await createThread({
+          messages: state.messages,
+          fileIds: [],
+        });
+        dispatch({ type: "SET_THREAD", payload: threadDetails });
+        dispatch({ type: "SET_THREAD_ID", payload: threadDetails.id });
+      } catch (error) {
+        dispatch({ type: "SET_ERROR", payload: "Failed to create thread" });
+      } finally {
+        dispatch({ type: "SET_LOADING", payload: false });
+      }
+    };
+
+    if (state.assistantId && !state.threadId) {
+      createNewThread();
+    }
+  }, [state.assistantId, state.threadId]);
+
+  const fetchConfigAndSetAssistant = async () => {
     try {
-      const response = await axios.get("/api/config");
-      const config = response.data;
+      dispatch({ type: "SET_LOADING", payload: true });
+      const config = await getConfig();
+
       if (config.ASSISTANT_ID) {
-        setAssistantId(config.ASSISTANT_ID);
+        const assistantDetails = await getAssistant(config.ASSISTANT_ID);
+        dispatch({ type: "SET_ASSISTANT", payload: assistantDetails });
+        dispatch({ type: "SET_ASSISTANT_ID", payload: config.ASSISTANT_ID });
+      } else {
+        dispatch({
+          type: "SET_ERROR",
+          payload: "Assistant ID not found in config",
+        });
       }
     } catch (error) {
-      console.error("Error fetching config:", error);
+      dispatch({
+        type: "SET_ERROR",
+        payload: "Failed to fetch assistant details",
+      });
+    } finally {
+      dispatch({ type: "SET_LOADING", payload: false });
     }
   };
 
-  // useEffect to fetch config on mount
-  useEffect(() => {
-    fetchConfig();
-  }, []);
+  const createNewThread = async () => {
+    try {
+      dispatch({ type: "SET_LOADING", payload: true });
+      const threadDetails = await createThread({
+        messages: state.messages,
+        fileIds: [],
+      });
+      dispatch({ type: "SET_THREAD", payload: threadDetails });
+      dispatch({ type: "SET_THREAD_ID", payload: threadDetails.id });
+    } catch (error) {
+      dispatch({ type: "SET_ERROR", payload: "Failed to create thread" });
+    } finally {
+      dispatch({ type: "SET_LOADING", payload: false });
+    }
+  };
 
   return (
     <div>
-      <h1>Assistant Test App</h1>
-      {!assistantId && (
-        <CreateAssistantComponent onAssistantCreated={setAssistantId} />
-      )}
-      {assistantId && (
+      {state.isLoading && <p>Loading...</p>}
+      {state.error && <p>Error: {state.error}</p>}
+      {!state.isLoading && !state.error && (
         <>
-          <CreateThreadComponent
-            assistantId={assistantId}
-            onThreadCreated={setThread}
-          />
-          {thread && <AddMessageComponent threadId={thread.id} />}
+          <Chat />
+          <Steps />
         </>
       )}
     </div>

@@ -118,8 +118,15 @@ export const checkForAction = async (threadId: string) => {
   return data;
 };
 
+interface IConfig {
+  ASSISTANT_ID: string;
+  UPLOADED_FILE_IDS: {
+    [key: string]: string;
+  };
+}
+
 // Get config
-export const getConfig = async () => {
+export const getConfig = async (): Promise<IConfig> => {
   const { data } = await axios.get(`/api/config`);
   return data;
 };

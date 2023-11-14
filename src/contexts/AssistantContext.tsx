@@ -4,7 +4,7 @@ import { Thread } from "openai/resources/beta/threads/threads.mjs";
 import React, { createContext, useReducer, useContext } from "react";
 
 // Define a type for message content
-type IMessageContent = {
+export type IMessageContent = {
   type: string;
   text?: {
     value: string;
@@ -13,7 +13,7 @@ type IMessageContent = {
 };
 
 // Define a type for a message
-type IMessage = {
+export type IMessage = {
   id: string;
   created_at: number;
   thread_id: string;
@@ -23,10 +23,11 @@ type IMessage = {
   assistant_id?: string;
   run_id?: string;
   metadata: Record<string, unknown>;
+  tempId?: number | null;
 };
 
 // Define the state structure
-type IState = {
+export type IState = {
   messages: IMessage[];
   isLoading: boolean;
   error: string | null;
@@ -36,6 +37,7 @@ type IState = {
   thread: Thread | null;
   runId: string | null;
   run: Run | null;
+  loadingMessage: boolean;
 };
 
 const initialState: IState = {
@@ -48,11 +50,13 @@ const initialState: IState = {
   thread: null,
   runId: null,
   run: null,
+  loadingMessage: false,
 };
 
 // Define action types
 type Action =
   | { type: "ADD_MESSAGE"; payload: IMessage }
+  | { type: "ADD_MESSAGES"; payload: IMessage[] }
   | { type: "SET_LOADING"; payload: boolean }
   | { type: "SET_ERROR"; payload: string | null }
   | { type: "CLEAR_MESSAGES" }
@@ -61,7 +65,8 @@ type Action =
   | { type: "SET_THREAD_ID"; payload: string }
   | { type: "SET_THREAD"; payload: Thread }
   | { type: "SET_RUN_ID"; payload: string }
-  | { type: "SET_RUN"; payload: Run };
+  | { type: "SET_RUN"; payload: Run }
+  | { type: "SET_LOADING_MESSAGE"; payload: boolean };
 
 // Create the context
 const AssistantContext = createContext<{
@@ -77,6 +82,8 @@ const reducer = (state: IState, action: Action): IState => {
   switch (action.type) {
     case "ADD_MESSAGE":
       return { ...state, messages: [...state.messages, action.payload] };
+    case "ADD_MESSAGES":
+      return { ...state, messages: action.payload };
     case "SET_LOADING":
       return { ...state, isLoading: action.payload };
     case "SET_ERROR":
@@ -95,6 +102,8 @@ const reducer = (state: IState, action: Action): IState => {
       return { ...state, runId: action.payload };
     case "SET_RUN":
       return { ...state, run: action.payload };
+    case "SET_LOADING_MESSAGE":
+      return { ...state, loadingMessage: action.payload };
     default:
       return state;
   }
