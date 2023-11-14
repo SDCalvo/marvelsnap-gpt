@@ -13,8 +13,6 @@ const CardImageTooltip = ({
   showCard: IShowCard;
   setShowCard: React.Dispatch<React.SetStateAction<IShowCard>>;
 }) => {
-  const [isTooltipVisible, setIsTooltipVisible] = useState(false);
-
   return (
     <span
       className={baseStyles["card-tooltip-container"]}
