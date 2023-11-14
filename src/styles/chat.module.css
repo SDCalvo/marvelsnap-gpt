@@ -178,3 +178,23 @@
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
   }
+
+  .message-html-content img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 10px 0;
+  }
+  
+  .message-html-content a {
+    color: #4a90e2;
+    text-decoration: none;
+  }
+  
+  .message-html-content a:hover {
+    text-decoration: underline;
+  }
+  
+  .message-html-content strong {
+    font-weight: bold;
+  }

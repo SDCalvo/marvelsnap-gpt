@@ -130,3 +130,16 @@ export const getConfig = async (): Promise<IConfig> => {
   const { data } = await axios.get(`/api/config`);
   return data;
 };
+
+// Cancel run
+interface ICancelRun {
+  threadId: string;
+  runId: string;
+}
+
+export const cancelRun = async ({ threadId, runId }: ICancelRun) => {
+  const { data } = await axios.post(
+    `/api/threads/${threadId}/runs/${runId}/cancelRun`
+  );
+  return data;
+};

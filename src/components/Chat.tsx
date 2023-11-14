@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useAssistant } from "@/contexts/AssistantContext";
-import { addMessageToThread } from "@/requests/assistantsRequests";
+import { addMessageToThread, cancelRun } from "@/requests/assistantsRequests";
 import styles from "../styles/chat.module.css";
+import AssistantMessage, { IMessagePart } from "./AssistantMessage";
 
 const Chat = () => {
   const { state, dispatch } = useAssistant();
@@ -44,6 +45,68 @@ const Chat = () => {
     }
   };
 
+  function parseMarkdownToParts(markdownText: string | undefined) {
+    const parts: IMessagePart[] = [];
+    if (!markdownText) return parts;
+
+    // Replace single dash with line break
+    const updatedText = markdownText.replace(/(^|\s)-(\s|$)/g, "<br>");
+
+    // Split the text by markdown link and image syntax
+    const splitText = updatedText.split(/(\!\[.*?\]\(.*?\))|(\*\*.*?\*\*)/g);
+
+    splitText.forEach((text) => {
+      if (!text) return; // Skip empty strings resulting from split
+
+      if (text.startsWith("![") && text.includes("type=card")) {
+        // Image syntax for card
+        const match = text.match(/\!\[(.*?)\]\((.*?)\)/);
+        if (match) {
+          parts.push({
+            type: "image",
+            content: match[1],
+            url: match[2],
+          });
+        }
+      } else if (text.startsWith("**")) {
+        // Bold syntax
+        const boldText = text.replace(/^\*\*(.*?)\*\*$/, "$1");
+        parts.push({ type: "strong", content: boldText });
+      } else if (text.includes("<br>")) {
+        // New lines
+        text.split("<br>").forEach((part) => {
+          if (part) {
+            parts.push({ type: "text", content: part });
+            // Add a newline part
+            parts.push({ type: "text", content: "<br>" });
+          }
+        });
+        // Remove the last added <br> as it's extra
+        parts.pop();
+      } else {
+        // Plain text
+        parts.push({ type: "text", content: text });
+      }
+    });
+
+    return parts;
+  }
+
+  const cancelRun = async () => {
+    try {
+      await cancelRun();
+    } catch (error) {
+      console.error("Failed to cancel run:", error);
+    }
+  };
+
+  // Cancel run if unmount component
+  React.useEffect(() => {
+    return () => {
+      cancelRun();
+    };
+  }, []);
+
   return (
     <div className={styles.outerContainer}>
       <div className={styles.chatContainer}>
@@ -67,9 +130,14 @@ const Chat = () => {
                     : styles.assistantMessage
                 }
               >
-                {message?.content?.map((content, contentIndex) => (
-                  <p key={contentIndex}>{content?.text?.value}</p>
-                ))}
+                {message?.content?.map((content, contentIndex) => {
+                  const messageParts = parseMarkdownToParts(
+                    content?.text?.value
+                  );
+                  return (
+                    <AssistantMessage key={contentIndex} parts={messageParts} />
+                  );
+                })}
               </div>
             </div>
           ))}
@@ -82,7 +150,7 @@ const Chat = () => {
             onChange={(e) => setNewMessage(e.target.value)}
             className={styles.newMessageInput}
             placeholder="Type your message here..."
-            disabled={isLoading}
+            disabled={isLoading || state.loadingMessage}
           />
           <button
             onClick={sendMessage}
@@ -90,6 +158,9 @@ const Chat = () => {
             disabled={isLoading || !newMessage.trim() || state.loadingMessage}
           >
             Send
+          </button>
+          <button onClick={cancelRun} className={styles.sendMessageButton}>
+            Cancel
           </button>
         </div>
       </div>

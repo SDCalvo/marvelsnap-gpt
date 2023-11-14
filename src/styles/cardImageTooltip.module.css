@@ -1,0 +1,44 @@
+.card-tooltip-container {
+    display: inline-block;
+    cursor: pointer;
+    position: relative;
+  }
+  
+  .card-tooltip-image {
+    visibility: hidden;
+    width: auto;
+    background-color: black;
+    text-align: center;
+    border-radius: 5px;
+    padding: 5px;
+    position: absolute;
+    z-index: 10;
+    bottom: 100%;
+    left: 100%;
+    margin-left: -100px; /* Adjust as needed */
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    /* Transition for the tooltip to appear with delay and fade */
+    opacity: 0;
+    transition: visibility 0s, opacity 0.5s linear;
+  }
+
+  .card-tooltip-text {
+    color: blue;
+    font-size: 1.2rem;
+    font-weight: 500;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  .card-tooltip-image img {
+    width: 400px;
+    height: auto;
+    z-index: 10;
+    border-radius: 17px;
+  }
+  
+  .card-tooltip-container:hover .card-tooltip-image {
+    visibility: visible;
+    opacity: 1;
+  }
+  
